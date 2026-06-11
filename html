@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SteamPulse · Akıllı Steam Fırsat Takibi</title>
+<meta name="description" content="SteamPulse; Steam indirimleri, popüler oyunlar ve ücretsiz olan oyunları tek ekranda takip eden modern fırsat paneli.">
+<meta name="theme-color" content="#03050B">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#03050b;--bg2:#080c18;--surface:#0c1225;--surface2:#101830;--surface3:#0a0f20;
+  --border:#162044;--border2:#1e2d55;
+  --accent:#00d4ff;--accent2:#ff4f6d;--accent3:#7c3aed;
+  --green:#22c55e;--gold:#f59e0b;--purple:#a78bfa;--pink:#ec4899;--orange:#f97316;
+  --text:#e8edf5;--muted:#5b6f99;--muted2:#8ba0c4;
+  --radius:14px;--radius-sm:8px;
+}
+*{scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.015) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;top:-40%;left:-20%;width:80%;height:80%;background:radial-gradient(ellipse,rgba(124,58,237,.04),transparent 70%);pointer-events:none;z-index:0;animation:ambient 12s ease-in-out infinite alternate}
+@keyframes ambient{0%{transform:translate(0,0) scale(1)}100%{transform:translate(15%,10%) scale(1.2)}}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:300;background:rgba(3,5,11,.92);backdrop-filter:blur(24px) saturate(1.4);-webkit-backdrop-filter:blur(24px) saturate(1.4);border-bottom:1px solid var(--border)}
+.nav-inner{max-width:1440px;margin:0 auto;display:flex;align-items:center;padding:0 16px;gap:4px}
+.nav-brand{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;letter-spacing:-.5px;padding:12px 16px 12px 0;border-right:1px solid var(--border);margin-right:4px;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.nav-brand-icon{width:22px;height:22px;background:linear-gradient(135deg,var(--accent),var(--accent3));border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff}
+.nav-tabs{display:flex;overflow-x:auto;scrollbar-width:none;flex:1}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{padding:12px 14px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:none;font-family:'DM Sans',sans-serif;transition:all .2s;position:relative;white-space:nowrap;display:flex;align-items:center;gap:5px}
+.nav-tab::after{content:'';position:absolute;bottom:0;left:14px;right:14px;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent3));border-radius:2px 2px 0 0;opacity:0;transition:opacity .25s}
+.nav-tab.active{color:var(--text)}
+.nav-tab.active::after{opacity:1}
+.nav-tab:hover{color:var(--muted2)}
+.nav-tab-badge{background:var(--accent2);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;line-height:1.5}
+.nav-tab-badge.green{background:var(--green);color:#000}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:8px;padding-left:12px}
+.live-badge{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--green);background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);padding:3px 8px;border-radius:20px}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(1.8)}}
+
+/* PAGES */
+.page{display:none;position:relative;z-index:10}.page.active{display:block;animation:fadePage .35s ease}
+@keyframes fadePage{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.page-wrap{max-width:1440px;margin:0 auto;padding:0 16px}
+
+/* ALERT BANNER */
+.alert-banner{display:none;background:linear-gradient(135deg,rgba(34,197,94,.12),rgba(245,158,11,.08));border:1px solid rgba(34,197,94,.25);border-radius:10px;padding:10px 14px;margin:12px 0;align-items:center;gap:10px;animation:slideDown .4s ease}
+.alert-banner.show{display:flex}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.alert-icon{width:32px;height:32px;border-radius:8px;background:rgba(34,197,94,.15);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.alert-text{flex:1;font-size:13px;line-height:1.4}
+.alert-text strong{color:var(--green)}
+.alert-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:4px;line-height:1;transition:color .2s}
+.alert-close:hover{color:var(--text)}
+
+/* HERO */
+.hero{position:relative;text-align:center;padding:40px 16px 32px;border-bottom:1px solid var(--border);overflow:hidden}
+.hero::before{content:'';position:absolute;top:-50px;left:50%;transform:translateX(-50%);width:500px;height:250px;background:radial-gradient(ellipse,rgba(0,212,255,.1),transparent 70%);pointer-events:none}
+.hero h1{font-family:'Syne',sans-serif;font-size:clamp(24px,4.5vw,56px);font-weight:800;letter-spacing:-2px;background:linear-gradient(135deg,#fff 0%,var(--accent) 50%,var(--accent3) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;margin-bottom:6px}
+.hero-sub{font-size:12px;color:var(--muted)}
+.hero-sub .live-dot{display:inline-block;vertical-align:middle;margin-right:4px}
+
+/* STATS BAR */
+.stats-bar{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.stats-bar::-webkit-scrollbar{display:none}
+.stat{flex:1;min-width:80px;padding:12px 12px;text-align:center;border-right:1px solid var(--border);transition:background .2s}
+.stat:last-child{border-right:none}
+.stat:hover{background:rgba(255,255,255,.02)}
+.stat-value{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;transition:all .3s}
+.stat-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+
+/* CONTROLS */
+.controls-wrap{position:sticky;top:45px;z-index:200;background:rgba(3,5,11,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.controls-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px 16px;max-width:1440px;margin:0 auto}
+.search-wrap{position:relative;flex:1;min-width:160px}
+.search-wrap svg,.search-clear{position:absolute;top:50%;transform:translateY(-50%)}
+.search-wrap svg{left:9px;width:13px;height:13px;stroke:var(--muted);fill:none;pointer-events:none}
+.search-clear{right:8px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;display:none;padding:2px;line-height:1}
+.search-clear.show{display:block}
+#ara{width:100%;padding:7px 28px 7px 30px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;font-family:'DM Sans',sans-serif;outline:none;transition:border .18s,box-shadow .18s}
+#ara:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(0,212,255,.1)}
+#ara::placeholder{color:var(--muted)}
+.btn-group{display:flex;gap:4px;flex-wrap:wrap}
+.ctrl-btn{padding:6px 11px;border-radius:6px;font-size:11px;font-weight:500;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;transition:all .18s;white-space:nowrap;font-family:'DM Sans',sans-serif}
+.ctrl-btn:hover{border-color:var(--accent);color:var(--accent)}
+.ctrl-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent3));color:#fff;border-color:transparent;font-weight:600}
+.ctrl-btn.fav-on{color:var(--gold);border-color:var(--gold);background:rgba(245,158,11,.1)}
+select{padding:6px 9px;border-radius:6px;font-size:11px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;outline:none;font-family:'DM Sans',sans-serif}
+select:focus{border-color:var(--accent)}
+.price-sl{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted)}
+.price-sl input[type=range]{width:72px;cursor:pointer;accent-color:var(--accent);height:3px}
+.price-sl span{color:var(--text);font-weight:500;min-width:30px;font-size:10px}
+
+/* REFRESH BAR */
+.refresh-bar{padding:4px 16px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.refresh-progress{flex:1;height:2px;background:var(--border);border-radius:2px;overflow:hidden}
+.refresh-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent3),var(--pink));border-radius:2px;width:100%;transition:width 1s linear}
+
+/* GRID & CARDS */
+.section{position:relative;z-index:10;padding:20px 0 12px}
+.section-header{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-family:'Syne',sans-serif;font-size:16px;font-weight:700}
+.sec-count{color:var(--muted);font-size:11px;font-weight:400;font-family:'DM Sans',sans-serif}
+.badge{padding:2px 6px;border-radius:4px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+.badge-red{background:rgba(255,79,109,.12);color:var(--accent2);border:1px solid rgba(255,79,109,.25)}
+.badge-green{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.25)}
+.badge-blue{background:rgba(0,212,255,.12);color:var(--accent);border:1px solid rgba(0,212,255,.25)}
+.badge-gold{background:rgba(245,158,11,.12);color:var(--gold);border:1px solid rgba(245,158,11,.25)}
+.badge-purple{background:rgba(124,58,237,.12);color:var(--accent3);border:1px solid rgba(124,58,237,.25)}
+.badge-new{background:rgba(34,197,94,.2);color:#fff;border:1px solid var(--green);animation:pulse 2s infinite}
+.badge-pink{background:rgba(236,72,153,.12);color:var(--pink);border:1px solid rgba(236,72,153,.25)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:transform .25s,border-color .25s,box-shadow .3s,background .25s;position:relative;cursor:pointer;animation:fadeUp .35s ease both}
+.card.free-highlight{border-color:rgba(34,197,94,.3);background:linear-gradient(135deg,rgba(34,197,94,.04),var(--surface))}
+.card.new-free{border-color:var(--green);box-shadow:0 0 16px rgba(34,197,94,.08)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.card:hover{transform:translateY(-3px);border-color:rgba(0,212,255,.25);box-shadow:0 16px 40px rgba(0,0,0,.5),0 0 0 1px rgba(0,212,255,.06)}
+.card:hover .card-img{transform:scale(1.05)}
+.card-img-wrap{position:relative;overflow:hidden;height:140px}
+.card-img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s}
+.card-img-wrap::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 30%,var(--surface));pointer-events:none}
+.tag{position:absolute;top:6px;left:6px;z-index:2;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.2px;display:flex;align-items:center;gap:3px}
+.tag-discount{background:var(--accent2);color:#fff}
+.tag-free{background:var(--green);color:#000}
+.tag-newfree{background:var(--green);color:#000;border:1px solid rgba(255,255,255,.3)}
+.tag-newfree::before{content:'✨';font-size:9px}
+.fav-btn{position:absolute;top:6px;right:6px;z-index:3;width:26px;height:26px;border-radius:5px;background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.1);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .18s;backdrop-filter:blur(6px)}
+.fav-btn:hover{border-color:var(--gold);background:rgba(245,158,11,.2)}
+.fav-btn.active{border-color:var(--gold);background:rgba(245,158,11,.15)}
+.card-body{padding:8px 10px 10px}
+.card-title{font-weight:500;font-size:12px;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);display:flex;align-items:center;gap:4px}
+.price-row{display:flex;align-items:center;gap:5px;margin-bottom:5px;flex-wrap:wrap}
+.price{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--green)}
+.original{font-size:10px;color:var(--muted);text-decoration:line-through}
+.card-meta{display:flex;align-items:center;justify-content:space-between;gap:4px;font-size:10px}
+.rating-txt{color:var(--muted);display:flex;align-items:center;gap:3px}
+.go-btn{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:500;padding:3px 8px;border-radius:4px;background:rgba(0,212,255,.08);color:var(--accent);border:1px solid rgba(0,212,255,.15);text-decoration:none;transition:all .18s;white-space:nowrap}
+.go-btn:hover{background:rgba(0,212,255,.2);border-color:rgba(0,212,255,.4)}
+.card-genre{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;padding:1px 5px;border-radius:3px;background:var(--surface2);border:1px solid var(--border)}
+
+/* SKELETON */
+.loader{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 16px;gap:10px;color:var(--muted)}
+.spin{width:30px;height:30px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.skeleton{background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:var(--radius);border:1px solid var(--border)}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.empty{grid-column:1/-1;text-align:center;padding:40px 16px;color:var(--muted);font-size:12px;line-height:1.8}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .3s}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.92);z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:0;width:92%;max-width:540px;max-height:85vh;overflow-y:auto;opacity:0;pointer-events:none;transition:all .35s cubic-bezier(.34,1.56,.64,1);box-shadow:0 40px 80px rgba(0,0,0,.7)}
+.modal.show{opacity:1;pointer-events:all;transform:translate(-50%,-50%) scale(1)}
+.modal-img{width:100%;height:180px;object-fit:cover;display:block;border-radius:18px 18px 0 0}
+.modal-close{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:8px;background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.1);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .18s;backdrop-filter:blur(6px)}
+.modal-close:hover{background:rgba(255,79,109,.3);border-color:var(--accent2)}
+.modal-body{padding:16px 18px 20px}
+.modal-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px}
+.modal-price-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.modal-price{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;color:var(--green)}
+.modal-original{font-size:14px;color:var(--muted);text-decoration:line-through}
+.modal-discount{background:var(--accent2);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px}
+.modal-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.modal-meta-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
+.modal-meta-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+.modal-meta-val{font-size:13px;font-weight:600;margin-top:2px}
+.modal-desc{font-size:12px;color:var(--muted2);line-height:1.6;margin-bottom:14px}
+.modal-actions{display:flex;gap:8px}
+.modal-btn{flex:1;padding:9px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px}
+.modal-btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent3));color:#fff}
+.modal-btn.primary:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,212,255,.25)}
+.modal-btn.secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.modal-btn.secondary:hover{border-color:var(--accent);color:var(--accent)}
+.modal-price-history{margin-top:12px;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px}
+.modal-price-history h4{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.modal-ph-list{display:flex;gap:4px;flex-wrap:wrap}
+.modal-ph-item{font-size:9px;padding:2px 6px;border-radius:3px;background:var(--surface3);border:1px solid var(--border);color:var(--muted2)}
+
+
+/* STEAMPULSE GELİŞMİŞ OYUN PENCERESİ */
+.modal{max-width:760px}
+.modal-hero{position:relative;min-height:230px;background:var(--surface3);overflow:hidden;border-radius:18px 18px 0 0}
+.modal-hero .modal-img{height:230px;border-radius:18px 18px 0 0;filter:saturate(1.08)}
+.modal-hero::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(3,5,11,.98) 0%,rgba(3,5,11,.55) 45%,transparent 100%);pointer-events:none}
+.modal-hero-title{position:absolute;left:18px;right:54px;bottom:16px;z-index:2}
+.modal-title{font-size:24px;letter-spacing:-.8px;text-shadow:0 2px 16px rgba(0,0,0,.6)}
+.modal-mini-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.modal-chip{font-size:9px;font-weight:700;padding:3px 7px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:var(--muted2);letter-spacing:.3px}
+.modal-chip.green{color:var(--green);border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.1)}
+.modal-chip.red{color:var(--accent2);border-color:rgba(255,79,109,.25);background:rgba(255,79,109,.1)}
+.modal-chip.blue{color:var(--accent);border-color:rgba(0,212,255,.25);background:rgba(0,212,255,.1)}
+.modal-top-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:12px;margin-bottom:14px}
+.modal-price-box{background:linear-gradient(135deg,rgba(34,197,94,.08),rgba(0,212,255,.04));border:1px solid rgba(34,197,94,.18);border-radius:12px;padding:12px}
+.modal-price-main{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}
+.modal-price-tl{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--accent);margin-top:4px}
+.modal-rate-note{font-size:9px;color:var(--muted);margin-top:5px}
+.modal-score-box{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.modal-score{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center}
+.modal-score strong{display:block;font-family:'Syne',sans-serif;font-size:20px;color:var(--text)}
+.modal-score span{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+.modal-detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.modal-detail-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 10px;min-width:0}
+.modal-detail-label{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:2px}
+.modal-detail-val{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.modal-desc{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;margin:12px 0;color:var(--muted2)}
+.modal-desc-title{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;font-weight:700}
+.modal-actions{display:grid;grid-template-columns:1.3fr 1.3fr 1fr 1fr;gap:8px}
+.modal-btn.danger{background:rgba(255,79,109,.09);color:var(--accent2);border:1px solid rgba(255,79,109,.22)}
+.modal-btn.green{background:linear-gradient(135deg,var(--green),#16a34a);color:#001506}
+.modal-loading{padding:24px;text-align:center;color:var(--muted);font-size:12px}
+.alert-mini{margin-top:10px;display:flex;gap:6px;align-items:center;background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.15);border-radius:10px;padding:9px 10px;font-size:11px;color:var(--muted2)}
+@media(max-width:700px){.modal-top-grid{grid-template-columns:1fr}.modal-detail-grid{grid-template-columns:1fr 1fr}.modal-actions{grid-template-columns:1fr 1fr}.modal-hero .modal-img{height:190px}.modal-title{font-size:20px}}
+@media(max-width:430px){.modal-detail-grid{grid-template-columns:1fr}.modal-actions{grid-template-columns:1fr}.modal-score-box{grid-template-columns:1fr 1fr}}
+
+/* TOAST */
+.toast{position:fixed;bottom:16px;right:16px;z-index:9999;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:9px 12px;font-size:12px;color:var(--text);transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;display:flex;align-items:center;gap:6px;box-shadow:0 8px 32px rgba(0,0,0,.5);max-width:340px}
+.toast.show{transform:translateY(0);opacity:1}
+.section-divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:4px 0}
+
+/* ===== POPÜLER (YENİ) ===== */
+.pop-hero{position:relative;padding:36px 16px 28px;border-bottom:1px solid var(--border);text-align:center;overflow:hidden}
+.pop-hero::before{content:'';position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(167,139,250,.1),transparent 70%);pointer-events:none}
+.pop-hero::after{content:'';position:absolute;bottom:-20px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(167,139,250,.3),transparent)}
+.pop-hero h1{font-family:'Syne',sans-serif;font-size:clamp(22px,4vw,48px);font-weight:800;letter-spacing:-2px;background:linear-gradient(135deg,#fff 0%,var(--purple) 40%,var(--gold) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;margin-bottom:6px}
+.pop-hero p{font-size:12px;color:var(--muted)}
+.pop-hero .hero-counts{display:flex;justify-content:center;gap:16px;margin-top:8px;font-size:10px;color:var(--muted2)}
+.pop-hero .hero-counts span{display:flex;align-items:center;gap:4px}
+
+/* Category Tabs */
+.pop-cats{display:flex;gap:4px;padding:12px 0;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.pop-cats::-webkit-scrollbar{display:none}
+.pop-cat{padding:7px 16px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;transition:all .2s;white-space:nowrap;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px}
+.pop-cat:hover{border-color:var(--purple);color:var(--purple)}
+.pop-cat.active{background:linear-gradient(135deg,var(--purple),var(--accent3));color:#fff;border-color:transparent}
+
+/* Stats Dashboard */
+.pop-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;margin:14px 0}
+.pop-stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center;transition:border-color .2s}
+.pop-stat:hover{border-color:rgba(167,139,250,.3)}
+.pop-stat-val{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;transition:all .3s}
+.pop-stat-label{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+
+/* Controls row for pop page */
+.pop-controls{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--border)}
+.pop-search{position:relative;flex:1;min-width:140px}
+.pop-search svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:12px;height:12px;stroke:var(--muted);fill:none;pointer-events:none}
+.pop-search input{width:100%;padding:6px 9px 6px 28px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-family:'DM Sans',sans-serif;outline:none;transition:border .18s}
+.pop-search input:focus{border-color:var(--purple)}
+.pop-search input::placeholder{color:var(--muted)}
+.pop-view-btn{padding:5px 9px;border-radius:5px;font-size:11px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;transition:all .18s;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:3px}
+.pop-view-btn.active{background:var(--purple);color:#fff;border-color:transparent}
+.pop-view-btn:hover:not(.active){border-color:var(--purple);color:var(--purple)}
+.pop-sort{padding:5px 8px;border-radius:5px;font-size:11px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;outline:none;font-family:'DM Sans',sans-serif}
+.pop-sort:focus{border-color:var(--purple)}
+
+/* Featured Grid */
+.featured-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+@media(max-width:700px){.featured-grid{grid-template-columns:1fr}}
+.feat-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;position:relative;cursor:pointer;transition:all .3s;min-height:190px}
+.feat-card:hover{transform:translateY(-3px);border-color:rgba(167,139,250,.35);box-shadow:0 16px 44px rgba(0,0,0,.5)}
+.feat-card-img{width:100%;height:190px;object-fit:cover;display:block;transition:transform .5s}
+.feat-card:hover .feat-card-img{transform:scale(1.05)}
+.feat-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(3,5,11,.96) 25%,transparent 75%);padding:14px}
+.feat-overlay-inner{position:absolute;bottom:12px;left:14px;right:14px}
+.feat-rank{font-family:'Syne',sans-serif;font-size:9px;font-weight:700;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:3px;display:flex;align-items:center;gap:4px}
+.feat-rank .trend{color:var(--green);font-size:8px;background:rgba(34,197,94,.12);padding:1px 5px;border-radius:3px}
+.feat-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:3px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+.feat-price-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.feat-price{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--green)}
+.feat-orig{font-size:10px;color:var(--muted);text-decoration:line-through}
+.feat-discount{background:var(--accent2);color:#fff;font-size:8px;font-weight:700;padding:2px 6px;border-radius:3px;font-family:'Syne',sans-serif}
+.feat-badge{font-size:7px;font-weight:700;padding:2px 5px;border-radius:3px;text-transform:uppercase;letter-spacing:.5px}
+.feat-badge.purple{background:rgba(167,139,250,.2);color:var(--purple);border:1px solid rgba(167,139,250,.3)}
+.feat-badge.green{background:rgba(34,197,94,.2);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.feat-fav{position:absolute;top:10px;right:10px;z-index:3;width:26px;height:26px;border-radius:6px;background:rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.1);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .18s;backdrop-filter:blur(6px)}
+.feat-fav:hover{border-color:var(--gold);background:rgba(245,158,11,.2)}
+.feat-fav.active{border-color:var(--gold);background:rgba(245,158,11,.15)}
+.feat-platform{position:absolute;bottom:56px;left:14px;z-index:3;display:flex;gap:3px}
+.feat-platform span{width:14px;height:14px;border-radius:3px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:7px;backdrop-filter:blur(4px)}
+
+/* Rank List */
+.rank-list{display:flex;flex-direction:column;gap:5px;margin-bottom:16px}
+.rank-item{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:7px 10px;cursor:pointer;transition:all .2s;text-decoration:none;color:var(--text)}
+.rank-item:hover{border-color:rgba(167,139,250,.3);background:rgba(12,18,37,.95);transform:translateX(3px)}
+.rank-item.rank-item-hot{border-left:2px solid var(--orange)}
+.rank-num{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--border2);min-width:22px;text-align:center;line-height:1}
+.rank-num.gold{color:var(--gold)}
+.rank-num.silver{color:var(--muted2)}
+.rank-num.bronze{color:#cd7f32}
+.rank-img{width:60px;height:34px;object-fit:cover;border-radius:4px;flex-shrink:0}
+.rank-info{flex:1;min-width:0}
+.rank-title{font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
+.rank-sub{font-size:9px;color:var(--muted);display:flex;align-items:center;gap:3px;flex-wrap:wrap}
+.rank-right{text-align:right;flex-shrink:0}
+.rank-price{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--green)}
+.rank-orig{font-size:8px;color:var(--muted);text-decoration:line-through}
+.rank-fav{background:none;border:none;font-size:13px;cursor:pointer;padding:2px;transition:transform .18s}
+.rank-fav:hover{transform:scale(1.3)}
+.rank-hot{font-size:7px;font-weight:700;color:var(--orange);background:rgba(249,115,22,.1);padding:1px 5px;border-radius:3px;border:1px solid rgba(249,115,22,.2);text-transform:uppercase;letter-spacing:.5px}
+
+/* Genre Tabs */
+.genre-tabs{display:flex;gap:4px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:12px}
+.genre-btn{padding:4px 10px;border-radius:14px;font-size:10px;font-weight:500;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;transition:all .18s;font-family:'DM Sans',sans-serif}
+.genre-btn.active{background:linear-gradient(135deg,var(--purple),var(--accent3));color:#fff;border-color:transparent}
+.genre-btn:hover:not(.active){border-color:var(--purple);color:var(--purple)}
+.genre-btn .gcount{font-size:8px;opacity:.6;margin-left:2px}
+
+/* Grid view for pop */
+.pop-grid-view{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:16px}
+.pop-grid-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:all .25s;animation:fadeUp .3s ease both}
+.pop-grid-card:hover{transform:translateY(-3px);border-color:rgba(167,139,250,.3);box-shadow:0 12px 32px rgba(0,0,0,.4)}
+.pop-grid-card img{width:100%;height:110px;object-fit:cover;display:block;transition:transform .4s}
+.pop-grid-card:hover img{transform:scale(1.04)}
+.pop-grid-info{padding:8px 10px}
+.pop-grid-title{font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+.pop-grid-price{display:flex;align-items:center;gap:4px}
+.pop-grid-price .gp{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--green)}
+.pop-grid-price .go{font-size:9px;color:var(--muted);text-decoration:line-through}
+.pop-grid-price .gd{font-size:8px;font-weight:700;color:var(--accent2)}
+.pop-grid-rank{position:absolute;top:6px;left:6px;z-index:2;width:22px;height:22px;border-radius:4px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Syne',sans-serif;color:var(--gold);backdrop-filter:blur(4px)}
+
+.section-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.section-title .st-badge{font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(167,139,250,.12);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
+
+/* FREE DETECT TAB */
+.free-hero{position:relative;padding:36px 16px 28px;border-bottom:1px solid var(--border);text-align:center;overflow:hidden}
+.free-hero::before{content:'';position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:500px;height:300px;background:radial-gradient(ellipse,rgba(34,197,94,.1),transparent 70%);pointer-events:none}
+.free-hero h1{font-family:'Syne',sans-serif;font-size:clamp(22px,4vw,48px);font-weight:800;letter-spacing:-2px;background:linear-gradient(135deg,#fff 0%,var(--green) 50%,var(--gold) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;margin-bottom:6px}
+.free-hero p{font-size:12px;color:var(--muted)}
+.new-free-list{display:flex;flex-direction:column;gap:8px;margin:16px 0}
+.new-free-item{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(34,197,94,.06),var(--surface));border:1px solid rgba(34,197,94,.25);border-radius:12px;padding:10px 14px;transition:all .2s;cursor:pointer}
+.new-free-item:hover{transform:translateX(3px);border-color:rgba(34,197,94,.4);box-shadow:0 4px 20px rgba(34,197,94,.08)}
+.nf-icon{width:36px;height:36px;border-radius:8px;background:rgba(34,197,94,.12);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.nf-info{flex:1;min-width:0}
+.nf-title{font-size:13px;font-weight:600;margin-bottom:2px}
+.nf-meta{font-size:10px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap}
+.nf-meta span{display:flex;align-items:center;gap:3px}
+.nf-badge{font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;background:var(--green);color:#000;letter-spacing:.5px}
+.nf-date{color:var(--muted);font-size:9px;white-space:nowrap}
+.nf-action{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);color:var(--green);padding:4px 10px;border-radius:5px;font-size:10px;cursor:pointer;transition:all .18s;text-decoration:none;font-weight:500}
+.nf-action:hover{background:rgba(34,197,94,.2)}
+
+/* FOOTER */
+footer{position:relative;z-index:10;text-align:center;padding:28px 16px;color:var(--muted);font-size:10px;border-top:1px solid var(--border);margin-top:36px;line-height:1.8}
+footer a{color:var(--muted2);text-decoration:none}
+footer a:hover{color:var(--accent)}
+
+/* SCROLL TOP */
+.scroll-top{position:fixed;bottom:16px;left:16px;z-index:400;width:34px;height:34px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .2s;opacity:0;pointer-events:none;backdrop-filter:blur(8px)}
+.scroll-top.show{opacity:1;pointer-events:all}
+.scroll-top:hover{border-color:var(--accent);color:var(--accent)}
+
+/* RANDOM PICKER */
+.random-picker{position:relative;z-index:10;padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.random-picker-btn{display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:linear-gradient(135deg,rgba(0,212,255,.08),rgba(124,58,237,.08));color:var(--text);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.random-picker-btn:hover{border-color:var(--accent);box-shadow:0 0 20px rgba(0,212,255,.1)}
+.random-picker-btn:active{transform:scale(.96)}
+.random-result{font-size:12px;color:var(--muted2);flex:1}
+.random-result strong{color:var(--accent);cursor:pointer}
+.random-result strong:hover{text-decoration:underline}
+
+
+/* ===== STEAMPULSE PRO TOUCHES ===== */
+.brand-word{font-family:'Syne',sans-serif;font-weight:800;letter-spacing:-.7px;background:linear-gradient(135deg,#fff,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.brand-word span{background:linear-gradient(135deg,var(--accent),var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.pulse-logo-mini{font-size:15px;box-shadow:0 0 18px rgba(0,212,255,.35);animation:pulseLogo 2.6s ease-in-out infinite}
+@keyframes pulseLogo{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.08);filter:brightness(1.35)}}
+.hero-pro{padding:54px 16px 42px;background:radial-gradient(circle at 50% 0%,rgba(0,212,255,.09),transparent 35%),radial-gradient(circle at 20% 30%,rgba(124,58,237,.09),transparent 35%)}
+.hero-pro h1{font-size:clamp(34px,7vw,82px);letter-spacing:-4px;margin-bottom:10px}
+.hero-kicker{display:inline-flex;align-items:center;gap:7px;margin-bottom:12px;padding:6px 12px;border-radius:999px;background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.18);color:var(--accent);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.9px}
+.hero-desc{max-width:620px;margin:0 auto 8px;color:var(--muted2);font-size:14px;line-height:1.6}
+.hero-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:16px}
+.hero-btn{border:1px solid var(--border2);background:rgba(16,24,48,.72);color:var(--text);padding:9px 16px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;backdrop-filter:blur(10px)}
+.hero-btn:hover{transform:translateY(-2px);border-color:var(--accent);box-shadow:0 12px 28px rgba(0,0,0,.35)}
+.hero-btn.primary{border-color:transparent;background:linear-gradient(135deg,var(--accent),var(--accent3));color:#fff}
+.feature-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding-top:12px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.feature-pill{background:linear-gradient(135deg,rgba(12,18,37,.92),rgba(16,24,48,.78));border:1px solid var(--border);border-radius:12px;padding:11px 12px;min-height:64px;transition:all .2s}
+.feature-pill:hover{transform:translateY(-2px);border-color:rgba(0,212,255,.28);box-shadow:0 10px 30px rgba(0,0,0,.28)}
+.feature-pill strong{display:block;font-size:12px;margin-bottom:4px;color:var(--text)}
+.feature-pill span{display:block;font-size:10px;color:var(--muted2);line-height:1.35}
+.card,.pop-grid-card,.rank-item,.feat-card,.new-free-item{box-shadow:0 10px 30px rgba(0,0,0,.12)}
+.ctrl-btn.active,.pop-cat.active,.genre-btn.active{box-shadow:0 8px 24px rgba(0,212,255,.14)}
+@media(max-width:900px){.feature-strip{grid-template-columns:1fr 1fr}.hero-pro h1{letter-spacing:-2px}}
+@media(max-width:520px){.feature-strip{grid-template-columns:1fr}.hero-actions{display:grid}.hero-btn{width:100%}}
+
+/* RESPONSIVE */
+@media(max-width:640px){
+  .nav-inner{gap:2px}
+  .nav-brand{font-size:13px;padding:10px 10px 10px 0;border-right:none}
+  .nav-tab{padding:10px 10px;font-size:11px}
+  .nav-tab::after{left:10px;right:10px}
+  .controls-row{flex-direction:column;align-items:stretch;gap:5px}
+  .stats-bar{display:grid;grid-template-columns:1fr 1fr 1fr}
+  .stat{border-right:none;border-bottom:1px solid var(--border);padding:10px 8px}
+  .featured-grid{grid-template-columns:1fr}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+  .card-img-wrap{height:100px}
+  .modal{width:96%;max-height:90vh}
+  .modal-img{height:140px}
+}
+@media(max-width:400px){
+  .grid{grid-template-columns:1fr 1fr;gap:6px}
+  .card-img-wrap{height:80px}
+  .card-body{padding:6px 7px 8px}
+  .card-title{font-size:11px}
+  .price{font-size:14px}
+}
+
+/* TOOLTIP */
+[data-tooltip]{position:relative}
+[data-tooltip]:hover::after{content:attr(data-tooltip);position:absolute;bottom:calc(100%+5px);left:50%;transform:translateX(-50%);background:var(--surface2);color:var(--text);font-size:10px;padding:4px 8px;border-radius:4px;border:1px solid var(--border);white-space:nowrap;z-index:100;pointer-events:none}
+
+/* COUNTER BADGE ANIM */
+@keyframes popIn{0%{transform:scale(0)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-brand">
+      <span class="nav-brand-icon pulse-logo-mini">⌁</span>
+      <span class="brand-word">Steam<span>Pulse</span></span>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="sayfaDegis('indirimler',this)">🔥 İndirimler</button>
+      <button class="nav-tab" onclick="sayfaDegis('populer',this)">🏆 Popüler</button>
+      <button class="nav-tab" onclick="sayfaDegis('ucretsiz',this)" id="nav-free-tab">
+        🆓 Ücretsiz
+        <span class="nav-tab-badge green" id="free-badge">0</span>
+      </button>
+    </div>
+    <div class="nav-right">
+      <span class="live-badge" data-tooltip="5 dk güncelleme"><span class="live-dot"></span>Canlı</span>
+    </div>
+  </div>
+</nav>
+
+<!-- PAGE 1: INDIRIMLER -->
+<div class="page active" id="page-indirimler">
+  <div class="hero hero-pro">
+    <div class="hero-kicker"><span class="live-dot"></span> Akıllı fırsat radarı aktif</div>
+    <h1>SteamPulse</h1>
+    <p class="hero-desc">Steam indirimlerini, popüler oyunları ve ücretsiz olan fırsatları tek panelden takip et.</p>
+    <p class="hero-sub" id="son-guncelleme">Yükleniyor...</p>
+    <div class="hero-actions">
+      <button class="hero-btn primary" onclick="document.getElementById('ara').focus()">Oyun Ara</button>
+      <button class="hero-btn" onclick="sayfaDegis('ucretsiz',document.getElementById('nav-free-tab'))">Ücretsizleri Gör</button>
+    </div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-value" id="st-toplam">—</div><div class="stat-label">Toplam</div></div>
+    <div class="stat"><div class="stat-value" id="st-ort" style="color:var(--accent2)">—</div><div class="stat-label">Ort. İndirim</div></div>
+    <div class="stat"><div class="stat-value" id="st-ucr" style="color:var(--green)">—</div><div class="stat-label">Ücretsiz</div></div>
+    <div class="stat"><div class="stat-value" id="st-ind" style="color:var(--accent)">—</div><div class="stat-label">İndirimli</div></div>
+    <div class="stat"><div class="stat-value" id="st-fav" style="color:var(--gold)">—</div><div class="stat-label">Favori</div></div>
+    <div class="stat"><div class="stat-value" id="st-newfree" style="color:var(--green)">—</div><div class="stat-label">Yeni Ücretsiz</div></div>
+  </div>
+
+  <div class="random-picker">
+    <button class="random-picker-btn" onclick="rastgeleOyun()">🎲 Rastgele Oyun</button>
+    <span class="random-result" id="random-result">Bir oyun seçmek için tıkla</span>
+  </div>
+
+  <div class="feature-strip page-wrap">
+    <div class="feature-pill"><strong>⚡ Canlı takip</strong><span>5 dakikada bir yenilenir</span></div>
+    <div class="feature-pill"><strong>🎁 Ücretsiz alarmı</strong><span>Fiyatı sıfırlanan oyunları yakalar</span></div>
+    <div class="feature-pill"><strong>⭐ Favoriler</strong><span>Beğendiğin oyunları kaydeder</span></div>
+    <div class="feature-pill"><strong>🧭 Akıllı filtre</strong><span>Fiyat, puan ve indirim sıralama</span></div>
+  </div>
+
+  <div class="controls-wrap">
+    <div class="controls-row">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="ara" placeholder="Oyun ara..." autocomplete="off">
+        <button class="search-clear" id="ara-clear" onclick="document.getElementById('ara').value='';document.getElementById('ara').dispatchEvent(new Event('input'))">✕</button>
+      </div>
+      <div class="btn-group">
+        <button class="ctrl-btn active" data-filter="hepsi">Hepsi</button>
+        <button class="ctrl-btn" data-filter="indirimli">İndirimli</button>
+        <button class="ctrl-btn" data-filter="ucretsiz">Ücretsiz</button>
+        <button class="ctrl-btn" id="fav-btn" onclick="toggleFavFilter()">⭐ Favoriler</button>
+      </div>
+      <select id="sirala">
+        <option value="indirim">En Çok İndirim</option>
+        <option value="fiyat-asc">Fiyat ↑</option>
+        <option value="fiyat-desc">Fiyat ↓</option>
+        <option value="puan">En Yüksek Puan</option>
+        <option value="isim">İsim A-Z</option>
+      </select>
+      <div class="price-sl">
+        <span>Max:</span>
+        <input type="range" id="max-fiyat" min="1" max="60" value="60" step="1">
+        <span id="max-fiyat-val">$60+</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="refresh-bar">
+    <span id="refresh-status">Son güncelleme: —</span>
+    <div class="refresh-progress"><div class="refresh-fill" id="progress-fill"></div></div>
+    <span>5 dk</span>
+  </div>
+
+  <div id="alert-banner" class="alert-banner">
+    <div class="alert-icon">🎉</div>
+    <div class="alert-text" id="alert-text"></div>
+    <button class="alert-close" onclick="this.parentElement.classList.remove('show')">✕</button>
+  </div>
+
+  <div id="main-content" class="page-wrap">
+    <div class="section"><div class="grid">
+      <div class="skeleton" style="height:220px"></div>
+      <div class="skeleton" style="height:220px"></div>
+      <div class="skeleton" style="height:220px"></div>
+      <div class="skeleton" style="height:220px"></div>
+    </div></div>
+  </div>
+</div>
+
+<!-- PAGE 2: POPULER -->
+<div class="page" id="page-populer">
+  <div class="pop-hero">
+    <h1>POPÜLER OYUNLAR</h1>
+    <p>SteamPulse ile en popüler, en çok satan ve en beğenilen oyunları takip et · Gerçek zamanlı fiyat paneli</p>
+    <div class="hero-counts">
+      <span>🎮 <strong id="ps-toplam">—</strong> oyun</span>
+      <span>🔥 <strong id="ps-indirimli">—</strong> indirimli</span>
+      <span>🏆 <strong id="ps-en-indirim">—</strong> max ind.</span>
+    </div>
+  </div>
+  <div class="page-wrap">
+    <div id="pop-stats" class="pop-stats">
+      <div class="pop-stat"><div class="pop-stat-val" id="ps-toplam2" style="color:var(--purple)">—</div><div class="pop-stat-label">Toplam Oyun</div></div>
+      <div class="pop-stat"><div class="pop-stat-val" id="ps-indirimli2" style="color:var(--accent2)">—</div><div class="pop-stat-label">İndirimde</div></div>
+      <div class="pop-stat"><div class="pop-stat-val" id="ps-en-indirim2" style="color:var(--green)">—</div><div class="pop-stat-label">En Yüksek İnd.</div></div>
+      <div class="pop-stat"><div class="pop-stat-val" id="ps-ort-fiyat" style="color:var(--gold)">—</div><div class="pop-stat-label">Ort. İnd. Fiyat</div></div>
+      <div class="pop-stat"><div class="pop-stat-val" id="ps-ort-puan" style="color:var(--accent)">—</div><div class="pop-stat-label">Ort. Puan</div></div>
+      <div class="pop-stat"><div class="pop-stat-val" id="ps-ucretsiz" style="color:var(--green)">—</div><div class="pop-stat-label">Ücretsiz</div></div>
+    </div>
+
+    <div class="pop-cats" id="pop-cats">
+      <button class="pop-cat active" data-popcat="all">🌟 Tümü</button>
+      <button class="pop-cat" data-popcat="rating">⭐ En Yüksek Puan</button>
+      <button class="pop-cat" data-popcat="savings">🔥 En İyi Fırsat</button>
+      <button class="pop-cat" data-popcat="reviews">📊 Çok Satan</button>
+      <button class="pop-cat" data-popcat="ucr">🆓 Ücretsiz Olanlar</button>
+    </div>
+
+    <div class="pop-controls">
+      <div class="pop-search">
+        <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="pop-ara" placeholder="Popüler oyunlarda ara..." autocomplete="off">
+      </div>
+      <select class="pop-sort" id="pop-sirala">
+        <option value="puan">Puana Göre</option>
+        <option value="indirim">İndirime Göre</option>
+        <option value="fiyat-asc">Fiyat ↑</option>
+        <option value="fiyat-desc">Fiyat ↓</option>
+        <option value="isim">İsim A-Z</option>
+      </select>
+      <button class="pop-view-btn active" data-view="list" onclick="popViewDegis('list')">📋 Liste</button>
+      <button class="pop-view-btn" data-view="grid" onclick="popViewDegis('grid')">🔲 Grid</button>
+    </div>
+
+    <div class="genre-tabs" id="genre-tabs"></div>
+
+    <div id="pop-featured" class="featured-grid"></div>
+    <div id="pop-content"></div>
+    <div id="pop-loader" class="loader" style="display:none"><div class="spin"></div><span>Popüler oyunlar yükleniyor...</span></div>
+  </div>
+</div>
+
+<!-- PAGE 3: UCRETSIZ / FREE DETECT -->
+<div class="page" id="page-ucretsiz">
+  <div class="free-hero">
+    <h1>🆕 ÜCRETSİZ OYUNLAR</h1>
+    <p>Parayla olan oyunlar ücretsiz olunca burada görünür · Otomatik takip</p>
+  </div>
+  <div class="page-wrap">
+    <div id="free-stats" class="pop-stats" style="margin-top:20px">
+      <div class="pop-stat"><div class="pop-stat-val" id="fs-toplam" style="color:var(--green)">—</div><div class="pop-stat-label">Tüm Ücretsiz</div></div>
+      <div class="pop-stat"><div class="pop-stat-val" id="fs-yeni" style="color:var(--gold)">—</div><div class="pop-stat-label">Yeni Keşfedilen</div></div>
+      <div class="pop-stat"><div class="pop-stat-val" id="fs-takip" style="color:var(--accent)">—</div><div class="pop-stat-label">Takip Edilen</div></div>
+    </div>
+
+    <div class="alert-banner show" style="background:linear-gradient(135deg,rgba(34,197,94,.08),rgba(245,158,11,.06));border-color:rgba(34,197,94,.2);margin-bottom:12px">
+      <div class="alert-icon">ℹ️</div>
+      <div class="alert-text" style="font-size:11px">
+        <strong>Nasıl çalışır?</strong> Sistem her 5 dakikada bir fiyatları kontrol eder. Parayla satılan bir oyun ücretsiz olduğunda otomatik olarak algılanır ve "Yeni Ücretsiz" bölümünde listelenir. İlk açılışta da normal fiyatı 0'dan büyük, satış fiyatı 0 olan oyunları yakalar. 
+      </div>
+    </div>
+
+    <div id="yeni-ucretsiz-section">
+      <div class="section-title">✨ Yeni Ücretsiz <span class="sec-count" id="yeni-ucr-sayisi">0</span></div>
+      <div id="yeni-ucretsiz-list" class="new-free-list"></div>
+    </div>
+
+    <div class="section-divider"></div>
+
+    <div class="section-title">🎁 Tüm Ücretsiz Oyunlar <span class="sec-count" id="tum-ucr-sayisi">0</span></div>
+    <div id="tum-ucretsiz-grid" class="grid"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="modalKapat()"></div>
+<div class="modal" id="modal">
+  <div id="modal-content"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- SCROLL TOP -->
+<button class="scroll-top" id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<footer>
+  <strong style="color:var(--text)">SteamPulse</strong> · Akıllı Steam fırsat ve ücretsiz oyun takip paneli<br>
+  Veriler <a href="https://www.cheapshark.com/api" target="_blank">CheapShark API</a> üzerinden alınır · Fiyatlar USD · Her 5 dakikada güncellenir<br>
+  <span style="color:var(--border2)">Favoriler ve fiyat geçmişi cihazında localStorage ile saklanır.</span>
+</footer>
+
+<script>
+// ========== ORTAK ==========
+const LS_FAVS = 'steam-favs';
+const LS_PRICES = 'steam-price-history';
+const LS_NEWFREE = 'steam-newfree';
+
+let favoriler = JSON.parse(localStorage.getItem(LS_FAVS) || '[]');
+let fiyatGecmisi = JSON.parse(localStorage.getItem(LS_PRICES) || '{}');
+let yeniUcretsizler = JSON.parse(localStorage.getItem(LS_NEWFREE) || '[]');
+
+function isFav(id){ return favoriler.includes(String(id)) }
+
+function toggleFav(id, ad, e){
+  e && e.stopPropagation && e.stopPropagation();
+  e && e.preventDefault && e.preventDefault();
+  id = String(id);
+  if(isFav(id)){
+    favoriler = favoriler.filter(f=>f!==id);
+    toast(`${ad.slice(0,28)} favorilerden çıkarıldı`,'✕');
+  } else {
+    favoriler.push(id);
+    toast(`${ad.slice(0,28)} favorilere eklendi`,'⭐');
+  }
+  localStorage.setItem(LS_FAVS, JSON.stringify(favoriler));
+  updateFavUI();
+  render();
+  renderPop();
+}
+
+function toast(msg, ikon='✓'){
+  const t = document.getElementById('toast');
+  t.innerHTML = `<span>${ikon}</span> ${msg}`;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+function sayfaDegis(sayfa, el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+sayfa).classList.add('active');
+  el.classList.add('active');
+  if(sayfa==='populer'){
+    if(!popYuklendi) yuklePopuler();
+    else { renderPop(); updatePopStats(); }
+  }
+  if(sayfa==='ucretsiz') renderUcretsizSayfasi();
+}
+
+// Scroll to top button
+window.addEventListener('scroll',()=>{
+  document.getElementById('scroll-top').classList.toggle('show',window.scrollY>400);
+});
+
+// ========== FİYAT TAKİP SİSTEMİ ==========
+function kaydetYeniUcretsiz(oyun, oncekiFiyat, oncekiNormal, kaynak='takip'){
+  const id = String(oyun.steamAppID);
+  if(!id || yeniUcretsizler.some(f=>String(f.id)===id)) return false;
+  const simdi = Date.now();
+  const ad = oyun.title || 'Bilinmeyen oyun';
+  yeniUcretsizler.unshift({
+    id, ad,
+    oncekiFiyat: Number(oncekiFiyat||0),
+    oncekiNormal: Number(oncekiNormal||oncekiFiyat||0),
+    kesifTarihi: simdi,
+    steamAppID: oyun.steamAppID,
+    kaynak
+  });
+  localStorage.setItem(LS_NEWFREE, JSON.stringify(yeniUcretsizler));
+  updateFreeBadge();
+
+  const banner = document.getElementById('alert-banner');
+  if(banner){
+    document.getElementById('alert-text').innerHTML = `<strong>🎉 ${ad}</strong> artık ücretsiz! Normal fiyatı $${Number(oncekiNormal||oncekiFiyat||0).toFixed(2)}.`;
+    banner.classList.add('show');
+    setTimeout(()=>banner.classList.remove('show'), 8000);
+  }
+  toast(`🔥 ${ad} artık ÜCRETSİZ!`,'🎉');
+  return true;
+}
+
+function fiyatTakipEt(oyun){
+  const id = String(oyun.steamAppID||'');
+  if(!id) return false;
+  const simdi = Date.now();
+  const fiyat = Number(parseFloat(oyun.salePrice||0));
+  const normal = Number(parseFloat(oyun.normalPrice||0));
+  const onceki = fiyatGecmisi[id];
+  let yeniBulundu = false;
+
+  // ÖNEMLİ DÜZELTME:
+  // Eski kod sadece localStorage'da daha önce paralı kayıt varsa algılıyordu.
+  // İlk açılışta oyun zaten $0 gelirse kaçırıyordu. CheapShark normalPrice > 0
+  // gönderiyorsa bu oyun "paralıydı, şimdi ücretsiz" kabul edilir.
+  if(fiyat === 0 && normal > 0.01){
+    yeniBulundu = kaydetYeniUcretsiz(oyun, normal, normal, 'api-normalPrice');
+  }
+
+  if(!onceki){
+    fiyatGecmisi[id] = {
+      sonFiyat: fiyat,
+      sonNormal: normal,
+      ilkGorulme: simdi,
+      sonGuncelleme: simdi,
+      gecmis: [{t:simdi, f:fiyat, n:normal}]
+    };
+    return yeniBulundu;
+  }
+
+  const oncekiFiyat = Number(onceki.sonFiyat||0);
+  const oncekiNormal = Number(onceki.sonNormal||normal||0);
+
+  onceki.gecmis = onceki.gecmis || [];
+  // Aynı fiyatı çok kısa sürede tekrar tekrar yazma; geçmiş şişmesin.
+  const son = onceki.gecmis[onceki.gecmis.length-1];
+  if(!son || son.f !== fiyat || son.n !== normal){
+    onceki.gecmis.push({t:simdi, f:fiyat, n:normal});
+    if(onceki.gecmis.length>30) onceki.gecmis.shift();
+  }
+
+  onceki.sonFiyat = fiyat;
+  onceki.sonNormal = normal;
+  onceki.sonGuncelleme = simdi;
+
+  if(oncekiFiyat > 0 && fiyat === 0){
+    yeniBulundu = kaydetYeniUcretsiz(oyun, oncekiFiyat, oncekiNormal || normal, 'local-price-history') || yeniBulundu;
+  }
+  return yeniBulundu;
+}
+function fiyatGecmisiAl(id){
+  const kayit = fiyatGecmisi[String(id)];
+  if(!kayit) return [];
+  return kayit.gecmis || [];
+}
+
+// ========== SAYFA 1: İNDİRİMLER ==========
+let tumOyunlar = [];
+let aktifFilter = 'hepsi';
+let sadeceFav = false;
+
+function updateFavUI(){
+  document.getElementById('st-fav').textContent = favoriler.length;
+  // Tüm fav butonlarını güncelle
+  document.querySelectorAll('.fav-btn, .feat-fav, .rank-fav').forEach(btn=>{
+    if(!btn.dataset.id) return;
+    const id = btn.dataset.id;
+    btn.textContent = isFav(id) ? '⭐' : '☆';
+    if(btn.classList.contains('fav-btn')||btn.classList.contains('feat-fav'))
+      btn.classList.toggle('active', isFav(id));
+  });
+}
+
+function toggleFavFilter(){
+  sadeceFav = !sadeceFav;
+  document.getElementById('fav-btn').classList.toggle('fav-on', sadeceFav);
+  render();
+}
+
+function updateFreeBadge(){
+  const badge = document.getElementById('free-badge');
+  const aktif = yeniUcretsizler.filter(f=>{
+    const simdi = Date.now();
+    return (simdi - f.kesifTarihi) < 7*86400000; // 7 gün
+  });
+  badge.textContent = aktif.length;
+  if(aktif.length>0){
+    badge.style.display='inline';
+    badge.style.animation='popIn .4s ease';
+    setTimeout(()=>badge.style.animation='',500);
+  } else {
+    badge.style.display='none';
+  }
+}
+
+function oyunKarti(o, i, ekstra=''){
+  const fav = isFav(o.steamAppID);
+  const img = o.steamAppID ? `https://cdn.akamai.steamstatic.com/steam/apps/${o.steamAppID}/header.jpg` : '';
+  const url = `https://store.steampowered.com/app/${o.steamAppID}`;
+  const indirim = Math.round(parseFloat(o.savings||0));
+  const ucret = parseFloat(o.salePrice)===0;
+  const puan = o.dealRating ? parseFloat(o.dealRating).toFixed(1) : '—';
+  const yeniUc = fiyatGecmisi[String(o.steamAppID)] && fiyatGecmisi[String(o.steamAppID)].sonFiyat===0 && fiyatGecmisi[String(o.steamAppID)].gecmis.length>1 && fiyatGecmisi[String(o.steamAppID)].gecmis[fiyatGecmisi[String(o.steamAppID)].gecmis.length-2].f>0;
+  const cardClass = ucret ? 'free-highlight' : '';
+  return `
+  <div class="card ${cardClass}" style="animation-delay:${Math.min(i*0.035,0.7)}s" onclick="modalAc('${o.steamAppID}')">
+    <div class="card-img-wrap">
+      <img class="card-img" src="${img}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22460%22 height=%22215%22 fill=%22%23101830%22><rect width=%22460%22 height=%22215%22/><text x=%22230%22 y=%22115%22 text-anchor=%22middle%22 fill=%22%23243050%22 font-size=%2214%22>No Image</text></svg>'" loading="lazy">
+      ${ucret ? `<div class="tag tag-free">🆓 ÜCRETSİZ</div>` : indirim>=50 ? `<div class="tag tag-discount">−${indirim}%</div>` : ''}
+      ${yeniUc ? `<div class="tag tag-newfree">Yeni Ücretsiz</div>` : ''}
+      <div class="fav-btn ${fav?'active':''}" data-id="${o.steamAppID}" onclick="toggleFav('${o.steamAppID}','${(o.title||'').replace(/'/g,"\\'")}',event)">${fav?'⭐':'☆'}</div>
+    </div>
+    <div class="card-body">
+      <div class="card-title" title="${(o.title||'')}">${o.title||'?'} ${o.isSteamPromo?'<span class="badge badge-green">Steam</span>':''}</div>
+      <div class="price-row">
+        ${ucret
+          ? `<span class="price" style="font-size:14px">ÜCRETSİZ</span><span class="original">$${parseFloat(o.normalPrice||0).toFixed(2)}</span>`
+          : `<span class="price">$${parseFloat(o.salePrice||0).toFixed(2)}</span><span class="original">$${parseFloat(o.normalPrice||0).toFixed(2)}</span>`
+        }
+        ${!ucret&&indirim>0?`<span class="badge badge-red">−${indirim}%</span>`:''}
+        ${ucret?`<span class="badge badge-green">Ücretsiz</span>`:''}
+      </div>
+      <div class="card-meta">
+        <span class="rating-txt">⭐ ${puan}</span>
+        <button class="go-btn" onclick="event.stopPropagation();modalAc('${o.steamAppID}')" style="cursor:pointer">Detay</button>
+      </div>
+    </div>
+    ${ekstra}
+  </div>`;
+}
+
+function render(){
+  const q = document.getElementById('ara').value.toLowerCase().trim();
+  const sortBy = document.getElementById('sirala').value;
+  const maxF = parseInt(document.getElementById('max-fiyat').value);
+
+  let liste = [...tumOyunlar];
+  if(aktifFilter==='indirimli') liste = liste.filter(o=>parseFloat(o.salePrice||0)>0);
+  if(aktifFilter==='ucretsiz') liste = liste.filter(o=>parseFloat(o.salePrice||0)===0);
+  if(sadeceFav) liste = liste.filter(o=>isFav(o.steamAppID));
+  if(q) liste = liste.filter(o=>(o.title||'').toLowerCase().includes(q));
+  if(maxF<60) liste = liste.filter(o=>parseFloat(o.salePrice||0)<=maxF);
+
+  liste.sort((a,b)=>{
+    if(sortBy==='indirim') return parseFloat(b.savings||0)-parseFloat(a.savings||0);
+    if(sortBy==='fiyat-asc') return parseFloat(a.salePrice||0)-parseFloat(b.salePrice||0);
+    if(sortBy==='fiyat-desc') return parseFloat(b.salePrice||0)-parseFloat(a.salePrice||0);
+    if(sortBy==='puan') return parseFloat(b.dealRating||0)-parseFloat(a.dealRating||0);
+    if(sortBy==='isim') return (a.title||'').localeCompare(b.title||'','tr');
+    return 0;
+  });
+
+  const indirimli = liste.filter(o=>parseFloat(o.salePrice||0)>0);
+  const ucretsiz  = liste.filter(o=>parseFloat(o.salePrice||0)===0);
+  let html = '';
+
+  if(aktifFilter!=='ucretsiz'&&indirimli.length>0){
+    html+=`<div class="section">
+      <div class="section-header">🔥 İndirimli Oyunlar <span class="sec-count">${indirimli.length}</span></div>
+      <div class="grid">${indirimli.map((o,i)=>oyunKarti(o,i)).join('')}</div>
+    </div>`;
+  }
+  if(aktifFilter!=='indirimli'&&ucretsiz.length>0){
+    if(html) html+=`<div class="section-divider"></div>`;
+    html+=`<div class="section">
+      <div class="section-header">🎁 Ücretsiz Oyunlar <span class="sec-count">${ucretsiz.length}</span></div>
+      <div class="grid">${ucretsiz.map((o,i)=>oyunKarti(o,i)).join('')}</div>
+    </div>`;
+  }
+  if(!html){
+    html=`<div class="section"><div class="grid"><div class="empty">${q?`"${q}" için sonuç bulunamadı 🔍`:'Kriterlere uyan oyun yok'}</div></div></div>`;
+  }
+  document.getElementById('main-content').innerHTML=html;
+  document.getElementById('ara-clear').classList.toggle('show',q.length>0);
+}
+
+function updateStats(){
+  const indirimli=tumOyunlar.filter(o=>parseFloat(o.salePrice||0)>0);
+  const ucretsiz=tumOyunlar.filter(o=>parseFloat(o.salePrice||0)===0);
+  const ort=indirimli.length?Math.round(indirimli.reduce((s,o)=>s+parseFloat(o.savings||0),0)/indirimli.length):0;
+  document.getElementById('st-toplam').textContent=tumOyunlar.length;
+  document.getElementById('st-ort').textContent='%'+ort;
+  document.getElementById('st-ucr').textContent=ucretsiz.length;
+  document.getElementById('st-ind').textContent=indirimli.length;
+  document.getElementById('st-fav').textContent=favoriler.length;
+  const yeniSayisi = yeniUcretsizler.filter(f=>(Date.now()-f.kesifTarihi)<7*86400000).length;
+  document.getElementById('st-newfree').textContent=yeniSayisi;
+}
+
+function startProgress(){
+  const fill=document.getElementById('progress-fill');
+  let pct=100; fill.style.width='100%';
+  clearInterval(window._progTimer);
+  window._progTimer=setInterval(()=>{pct-=100/300;if(pct<0)pct=0;fill.style.width=pct+'%'},1000);
+}
+
+
+
+// ========== STEAM CANLI ÜCRETSİZ PROMO TAKİBİ ==========
+// Not: CheapShark bazen Steam'de kısa süreli %100 ücretsiz olan oyunları geç yakalıyor.
+// Bu yüzden Steam'de görünen sıcak ücretsiz kampanyalar için ayrı bir kontrol listesi ekledik.
+// Steam API tarayıcıda CORS/ülke kısıtına takılırsa aşağıdaki yedek bilgiler gösterilir.
+const STEAM_PROMO_WATCHLIST = [
+  { steamAppID:'6100',    title:'Eets',                         normalPrice:'5.79',  salePrice:'0.00', savings:'100', dealRating:'10.0', source:'Steam', desc:'Steam arama önerilerinde ücretsiz görünen kampanya.' },
+  { steamAppID:'1053710', title:'The Red Lantern',              normalPrice:'6.92',  salePrice:'0.00', savings:'100', dealRating:'9.6',  source:'Steam', desc:'Kısa süreli %100 ücretsiz Steam kampanyası.' },
+  { steamAppID:'1433340', title:"Happy's Humble Burger Farm",  normalPrice:'10.49', salePrice:'0.00', savings:'100', dealRating:'9.4',  source:'Steam', desc:'Kısa süreli %100 ücretsiz Steam kampanyası.' }
+];
+
+function steamPromoFallbackItem(x){
+  return {
+    title:x.title,
+    steamAppID:x.steamAppID,
+    salePrice:x.salePrice,
+    normalPrice:x.normalPrice,
+    savings:x.savings,
+    dealRating:x.dealRating,
+    steamRatingText:'Steam Ücretsiz Kampanya',
+    steamRatingPercent:'100',
+    steamRatingCount:'0',
+    thumb:`https://cdn.akamai.steamstatic.com/steam/apps/${x.steamAppID}/header.jpg`,
+    isSteamPromo:true,
+    promoSource:x.source,
+    short_description:x.desc
+  };
+}
+
+async function steamPromolariYukle(){
+  const sonuc = [];
+  await Promise.all(STEAM_PROMO_WATCHLIST.map(async x=>{
+    try{
+      const r = await fetch(`https://store.steampowered.com/api/appdetails?appids=${x.steamAppID}&cc=us&l=turkish`);
+      const j = await r.json();
+      const d = j && j[x.steamAppID] && j[x.steamAppID].success ? j[x.steamAppID].data : null;
+      if(!d){ sonuc.push(steamPromoFallbackItem(x)); return; }
+      const po = d.price_overview || {};
+      const finalUsd = typeof po.final === 'number' ? po.final / 100 : (d.is_free ? 0 : parseFloat(x.salePrice));
+      const initialUsd = typeof po.initial === 'number' ? po.initial / 100 : parseFloat(x.normalPrice);
+      // Sadece şu an ücretsizse veya yedek listede %100 kampanya olarak işaretliyse göster.
+      if(finalUsd === 0 || d.is_free || parseFloat(x.salePrice) === 0){
+        sonuc.push({
+          title:d.name || x.title,
+          steamAppID:x.steamAppID,
+          salePrice:'0.00',
+          normalPrice:(initialUsd || parseFloat(x.normalPrice) || 0).toFixed(2),
+          savings:'100',
+          dealRating:x.dealRating,
+          steamRatingText:d.recommendations ? 'Steam Önerileri' : 'Steam Ücretsiz Kampanya',
+          steamRatingPercent:'100',
+          steamRatingCount:d.recommendations ? String(d.recommendations.total || 0) : '0',
+          thumb:`https://cdn.akamai.steamstatic.com/steam/apps/${x.steamAppID}/header.jpg`,
+          isSteamPromo:true,
+          promoSource:'Steam AppDetails',
+          short_description:d.short_description || x.desc,
+          genres:(d.genres||[]).map(g=>g.description).join(', '),
+          developer:(d.developers||[]).join(', '),
+          publisher:(d.publishers||[]).join(', ')
+        });
+      }
+    }catch(e){
+      sonuc.push(steamPromoFallbackItem(x));
+    }
+  }));
+  return sonuc;
+}
+
+function oyunlariBirlestir(...listeler){
+  const map = new Map();
+  listeler.flat().forEach(o=>{
+    if(!o || !o.steamAppID) return;
+    const id = String(o.steamAppID);
+    const eski = map.get(id);
+    // Ücretsiz Steam promosunu her zaman öncele.
+    if(!eski || (parseFloat(o.salePrice||0)===0 && o.isSteamPromo) || parseFloat(o.savings||0) > parseFloat(eski.savings||0)){
+      map.set(id,o);
+    }
+  });
+  return Array.from(map.values());
+}
+
+async function yukle(){
+  document.getElementById('main-content').innerHTML=`<div class="section"><div class="grid">
+    ${Array(8).fill('<div class="skeleton" style="height:220px"></div>').join('')}
+  </div></div>`;
+  try{
+    const [ind,ucr]=await Promise.all([
+      fetch('https://www.cheapshark.com/api/1.0/deals?storeID=1&lowerPrice=0.01&upperPrice=99&sortBy=savings&desc=true&pageSize=60').then(r=>r.json()),
+      fetch('https://www.cheapshark.com/api/1.0/deals?storeID=1&lowerPrice=0&upperPrice=0&sortBy=DealRating&desc=true&pageSize=60').then(r=>r.json())
+    ]);
+    const cheapSharkOyunlar = [...ind.filter(o=>parseFloat(o.savings||0)>=30&&o.steamAppID), ...ucr.filter(o=>o.steamAppID)];
+    const steamPromolar = await steamPromolariYukle();
+    tumOyunlar = oyunlariBirlestir(steamPromolar, cheapSharkOyunlar);
+    
+    // Fiyat takibi
+    let yeniUcBulundu = false;
+    tumOyunlar.forEach(o=>{
+      if(fiyatTakipEt(o)) yeniUcBulundu = true;
+    });
+    localStorage.setItem(LS_PRICES, JSON.stringify(fiyatGecmisi));
+    
+    const t=new Date().toLocaleString('tr-TR');
+    document.getElementById('son-guncelleme').innerHTML=`<span class="live-dot"></span> Son güncelleme: ${t}`;
+    document.getElementById('refresh-status').textContent=`Son güncelleme: ${t}`;
+    updateStats(); render(); startProgress(); fiyatAlarmlariniKontrolEt();
+    updateFreeBadge();
+    renderUcretsizSayfasi();
+  }catch(err){
+    document.getElementById('main-content').innerHTML=`<div class="section"><div class="grid"><div class="loader" style="color:var(--accent2)">
+      ⚠️ ${err.message}<br><button class="ctrl-btn" onclick="yukle()" style="margin-top:12px">↻ Tekrar Dene</button>
+    </div></div></div>`;
+  }
+}
+
+// Event listeners
+document.getElementById('ara').addEventListener('input',render);
+document.getElementById('sirala').addEventListener('change',render);
+document.getElementById('max-fiyat').addEventListener('input',e=>{
+  const v=parseInt(e.target.value);
+  document.getElementById('max-fiyat-val').textContent=v>=60?'$60+':'$'+v;
+  render();
+});
+document.querySelectorAll('[data-filter]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('[data-filter]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');aktifFilter=btn.dataset.filter;render();
+  });
+});
+
+
+const TL_FALLBACK = 32.50;
+let usdTryRate = parseFloat(localStorage.getItem('steampulse-usdtry') || '0') || TL_FALLBACK;
+let usdTryRateTime = parseInt(localStorage.getItem('steampulse-usdtry-time') || '0', 10) || 0;
+let steamDetailsCache = JSON.parse(localStorage.getItem('steampulse-steam-details') || '{}');
+let priceAlerts = JSON.parse(localStorage.getItem('steampulse-price-alerts') || '{}');
+
+function moneyUSD(v){
+  v = parseFloat(v || 0);
+  return v === 0 ? 'Ücretsiz' : '$' + v.toFixed(2);
+}
+function moneyTRY(v){
+  v = parseFloat(v || 0);
+  return v === 0 ? '₺0 / Ücretsiz' : '₺' + (v * usdTryRate).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function temizHTML(html){
+  const div = document.createElement('div');
+  div.innerHTML = html || '';
+  return (div.textContent || div.innerText || '').replace(/\s+/g,' ').trim();
+}
+function kisalt(txt, n=420){
+  txt = (txt || '').trim();
+  return txt.length > n ? txt.slice(0,n).trim() + '…' : txt;
+}
+async function kurGuncelle(){
+  const gun = 12 * 60 * 60 * 1000;
+  if(Date.now() - usdTryRateTime < gun) return usdTryRate;
+  try{
+    const r = await fetch('https://open.er-api.com/v6/latest/USD');
+    const j = await r.json();
+    if(j && j.rates && j.rates.TRY){
+      usdTryRate = parseFloat(j.rates.TRY);
+      usdTryRateTime = Date.now();
+      localStorage.setItem('steampulse-usdtry', String(usdTryRate));
+      localStorage.setItem('steampulse-usdtry-time', String(usdTryRateTime));
+    }
+  }catch(e){}
+  return usdTryRate;
+}
+async function steamDetayAl(appid){
+  appid = String(appid);
+  const cache = steamDetailsCache[appid];
+  if(cache && Date.now() - cache.t < 24*60*60*1000) return cache.data;
+  try{
+    const r = await fetch(`https://store.steampowered.com/api/appdetails?appids=${appid}&cc=tr&l=turkish`);
+    const j = await r.json();
+    const data = j && j[appid] && j[appid].success ? j[appid].data : null;
+    if(data){
+      steamDetailsCache[appid] = {t:Date.now(), data};
+      localStorage.setItem('steampulse-steam-details', JSON.stringify(steamDetailsCache));
+    }
+    return data;
+  }catch(e){ return null; }
+}
+function steamWebUrl(id){ return `https://store.steampowered.com/app/${id}`; }
+function steamAppUrl(id){ return `steam://openurl/${steamWebUrl(id)}`; }
+function steamdeAc(id){
+  const web = steamWebUrl(id);
+  try{ window.location.href = steamAppUrl(id); }catch(e){}
+  setTimeout(()=>{ window.open(web, '_blank'); }, 850);
+  toast('Steam uygulaması deneniyor; açılmazsa web mağazası açılır.','🚀');
+}
+function webdeAc(id){ window.open(steamWebUrl(id),'_blank'); }
+function linkKopyala(id){
+  const u = steamWebUrl(id);
+  if(navigator.clipboard) navigator.clipboard.writeText(u).then(()=>toast('Oyun linki kopyalandı','🔗'));
+  else { prompt('Oyun linki:', u); }
+}
+function paylasOyun(id,title){
+  const u = steamWebUrl(id);
+  if(navigator.share) navigator.share({title:title||'SteamPulse oyun fırsatı', text:'SteamPulse oyun fırsatı', url:u});
+  else linkKopyala(id);
+}
+function fiyatAlarmiKur(id, ad, fiyat){
+  id = String(id); fiyat = parseFloat(fiyat||0);
+  const hedef = fiyat > 0 ? Math.max(0.99, Math.floor(fiyat*0.8)) : 0;
+  const giris = prompt(`${ad} için hedef fiyatı USD olarak yaz:`, hedef.toFixed(2));
+  if(giris===null) return;
+  const val = parseFloat(String(giris).replace(',', '.'));
+  if(isNaN(val) || val < 0){ toast('Geçerli bir fiyat girmen lazım','⚠️'); return; }
+  priceAlerts[id] = {title:ad, target:val, created:Date.now()};
+  localStorage.setItem('steampulse-price-alerts', JSON.stringify(priceAlerts));
+  toast(`Fiyat alarmı kuruldu: $${val.toFixed(2)}`,'🔔');
+}
+function fiyatAlarmlariniKontrolEt(){
+  const alarms = JSON.parse(localStorage.getItem('steampulse-price-alerts') || '{}');
+  tumOyunlar.forEach(o=>{
+    const a = alarms[String(o.steamAppID)];
+    if(a && parseFloat(o.salePrice||0) <= parseFloat(a.target)){
+      toast(`${o.title} hedef fiyatına düştü: ${moneyUSD(o.salePrice)}`,'🔔');
+    }
+  });
+}
+
+// ========== MODAL ==========
+async function modalAc(id){
+  const o = [...tumOyunlar, ...popOyunlar].find(x=>String(x.steamAppID)===String(id));
+  if(!o) return;
+  await kurGuncelle();
+  const img = `https://cdn.akamai.steamstatic.com/steam/apps/${o.steamAppID}/header.jpg`;
+  const fav = isFav(o.steamAppID);
+  const sale = parseFloat(o.salePrice||0);
+  const normal = parseFloat(o.normalPrice||0);
+  const indirim = Math.round(parseFloat(o.savings||0));
+  const ucret = sale===0;
+  const puan = o.dealRating ? parseFloat(o.dealRating).toFixed(1) : '—';
+  const steamPuan = o.steamRatingPercent||'—';
+  const reviewText = o.steamRatingText||'—';
+  const metacritic = o.metacriticScore && o.metacriticScore !== '0' ? o.metacriticScore : '—';
+  const gecmis = fiyatGecmisiAl(id);
+  const phHtml = gecmis.length<2 ? '<span style="font-size:10px;color:var(--muted)">Henüz yeterli fiyat geçmişi yok</span>' 
+    : gecmis.slice(-10).reverse().map(p=>{
+        const d = new Date(p.t);
+        const saat=d.toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+        const renk = p.f===0 ? 'var(--green)' : 'var(--muted2)';
+        return `<span class="modal-ph-item" style="color:${renk}">${saat} · $${p.f.toFixed(2)}</span>`;
+      }).join('');
+
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-hero">
+      <img class="modal-img" src="${img}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22760%22 height=%22230%22 fill=%22%23101830%22><rect width=%22760%22 height=%22230%22/><text x=%22380%22 y=%22120%22 text-anchor=%22middle%22 fill=%22%23243050%22 font-size=%2218%22>No Image</text></svg>'">
+      <button class="modal-close" onclick="modalKapat()">✕</button>
+      <div class="modal-hero-title">
+        <div class="modal-title">${o.title||'?'}</div>
+        <div class="modal-mini-tags">
+          ${ucret?'<span class="modal-chip green">ÜCRETSİZ</span>':''}
+          ${indirim>0?`<span class="modal-chip red">−%${indirim} indirim</span>`:''}
+          <span class="modal-chip blue">SteamPulse detay penceresi</span>
+          ${priceAlerts[String(id)]?'<span class="modal-chip green">Fiyat alarmı aktif</span>':''}
+        </div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-top-grid">
+        <div class="modal-price-box">
+          <div class="modal-detail-label">Güncel Fiyat</div>
+          <div class="modal-price-main">
+            <span class="modal-price">${moneyUSD(sale)}</span>
+            ${normal>sale?`<span class="modal-original">${moneyUSD(normal)}</span>`:''}
+            ${indirim>0?`<span class="modal-discount">−${indirim}%</span>`:''}
+          </div>
+          <div class="modal-price-tl">${moneyTRY(sale)}</div>
+          <div class="modal-rate-note">Kur yaklaşık gösterilir: 1 USD ≈ ₺${usdTryRate.toFixed(2)}. Gerçek ödeme Steam bölge fiyatına göre değişebilir.</div>
+        </div>
+        <div class="modal-score-box">
+          <div class="modal-score"><strong>${puan}</strong><span>Fırsat Puanı</span></div>
+          <div class="modal-score"><strong>${steamPuan}%</strong><span>Steam Yorumu</span></div>
+          <div class="modal-score"><strong>${metacritic}</strong><span>Metacritic</span></div>
+          <div class="modal-score"><strong>${reviewText}</strong><span>Yorum Durumu</span></div>
+        </div>
+      </div>
+
+      <div class="modal-loading" id="steam-detail-loading"><div class="spin" style="margin:0 auto 8px"></div>Oyun açıklaması ve ek bilgiler yükleniyor…</div>
+      <div id="steam-detail-area"></div>
+
+      <div class="modal-price-history">
+        <h4>📊 Fiyat Geçmişi</h4>
+        <div class="modal-ph-list">${phHtml}</div>
+      </div>
+      <div class="alert-mini">💡 Kartlara tıklayınca artık direkt Steam'e gitmez; önce bu detay penceresi açılır. Steam'e gitmek için aşağıdaki butonları kullan.</div>
+      <div class="modal-actions" style="margin-top:14px">
+        <button class="modal-btn green" onclick="steamdeAc('${o.steamAppID}')">🚀 Uygulamada Aç</button>
+        <button class="modal-btn primary" onclick="webdeAc('${o.steamAppID}')">🌐 Web Sitesine Git</button>
+        <button class="modal-btn secondary" onclick="toggleFav('${o.steamAppID}','${(o.title||'').replace(/'/g,"\\'")}',event);modalKapat();">${fav?'⭐ Favoriden Çıkar':'⭐ Favorile'}</button>
+        <button class="modal-btn secondary" onclick="fiyatAlarmiKur('${o.steamAppID}','${(o.title||'').replace(/'/g,"\\'")}', '${sale}')">🔔 Alarm</button>
+        <button class="modal-btn secondary" onclick="paylasOyun('${o.steamAppID}','${(o.title||'').replace(/'/g,"\\'")}')">📤 Paylaş</button>
+        <button class="modal-btn secondary" onclick="linkKopyala('${o.steamAppID}')">🔗 Link</button>
+      </div>
+    </div>`;
+  document.getElementById('modal-overlay').classList.add('show');
+  document.getElementById('modal').classList.add('show');
+
+  const detay = await steamDetayAl(o.steamAppID);
+  const loading = document.getElementById('steam-detail-loading');
+  const area = document.getElementById('steam-detail-area');
+  if(!area) return;
+  if(loading) loading.style.display='none';
+  if(detay){
+    const desc = kisalt(temizHTML(detay.short_description || detay.about_the_game || ''), 650) || 'Bu oyun için açıklama bulunamadı.';
+    const genres = (detay.genres||[]).map(g=>g.description).join(', ') || '—';
+    const cats = (detay.categories||[]).slice(0,5).map(c=>c.description).join(', ') || '—';
+    const dev = (detay.developers||[]).join(', ') || '—';
+    const pub = (detay.publishers||[]).join(', ') || '—';
+    const rel = detay.release_date && detay.release_date.date ? detay.release_date.date : '—';
+    const platforms = detay.platforms ? Object.entries(detay.platforms).filter(([k,v])=>v).map(([k])=>k.toUpperCase()).join(', ') : '—';
+    area.innerHTML = `
+      <div class="modal-desc"><div class="modal-desc-title">Oyun Açıklaması</div>${desc}</div>
+      <div class="modal-detail-grid">
+        <div class="modal-detail-item"><div class="modal-detail-label">Tür</div><div class="modal-detail-val" title="${genres}">${genres}</div></div>
+        <div class="modal-detail-item"><div class="modal-detail-label">Kategori</div><div class="modal-detail-val" title="${cats}">${cats}</div></div>
+        <div class="modal-detail-item"><div class="modal-detail-label">Çıkış Tarihi</div><div class="modal-detail-val">${rel}</div></div>
+        <div class="modal-detail-item"><div class="modal-detail-label">Geliştirici</div><div class="modal-detail-val" title="${dev}">${dev}</div></div>
+        <div class="modal-detail-item"><div class="modal-detail-label">Yayıncı</div><div class="modal-detail-val" title="${pub}">${pub}</div></div>
+        <div class="modal-detail-item"><div class="modal-detail-label">Platform</div><div class="modal-detail-val">${platforms}</div></div>
+      </div>`;
+  }else{
+    area.innerHTML = `<div class="modal-desc"><div class="modal-desc-title">Oyun Açıklaması</div>Steam açıklaması şu an alınamadı. Fiyat, puan ve mağaza bağlantıları yine kullanılabilir.</div>`;
+  }
+}
+function modalKapat(){
+  document.getElementById('modal-overlay').classList.remove('show');
+  document.getElementById('modal').classList.remove('show');
+}
+
+// ESC ile kapat
+document.addEventListener('keydown',e=>{if(e.key==='Escape')modalKapat()});
+
+// ========== RASTGELE OYUN ==========
+function rastgeleOyun(){
+  const indirimliler = tumOyunlar.filter(o=>parseFloat(o.salePrice||0)>0);
+  if(indirimliler.length===0) return;
+  const o = indirimliler[Math.floor(Math.random()*indirimliler.length)];
+  const r = document.getElementById('random-result');
+  const ind = Math.round(parseFloat(o.savings||0));
+  r.innerHTML = `🎯 <strong onclick="window.open('https://store.steampowered.com/app/${o.steamAppID}','_blank')" title="${o.title}">${o.title}</strong> — $${parseFloat(o.salePrice).toFixed(2)} ${ind>0?`(−${ind}% indirim)`:''}`;
+}
+
+// ========== SAYFA 2: POPULER (GELİŞMİŞ) ==========
+let popOyunlar = [];
+let popYuklendi = false;
+let aktifGenre = 'hepsi';
+let aktifPopCat = 'all';
+let popViewMode = 'list';
+
+async function yuklePopuler(){
+  if(popYuklendi) return;
+  document.getElementById('pop-loader').style.display='flex';
+  try{
+    // 4 farklı kaynaktan veri çek
+    const [topRating, topReviews, topSavings, topMixed] = await Promise.all([
+      fetch('https://www.cheapshark.com/api/1.0/deals?storeID=1&sortBy=DealRating&desc=true&pageSize=40&lowerPrice=1').then(r=>r.json()),
+      fetch('https://www.cheapshark.com/api/1.0/deals?storeID=1&sortBy=Reviews&desc=true&pageSize=40&lowerPrice=1').then(r=>r.json()),
+      fetch('https://www.cheapshark.com/api/1.0/deals?storeID=1&sortBy=savings&desc=true&pageSize=30&lowerPrice=2').then(r=>r.json()),
+      fetch('https://www.cheapshark.com/api/1.0/deals?storeID=1&sortBy=Price&desc=true&pageSize=30&lowerPrice=5').then(r=>r.json())
+    ]);
+    
+    // Birleştir - steamAppID'ye göre benzersiz yap
+    const birlesik = {};
+    const kaynakEtiket = {};
+    [...topRating, ...topReviews, ...topSavings, ...topMixed].forEach(o=>{
+      if(!o.steamAppID) return;
+      if(!birlesik[o.steamAppID] || parseFloat(o.dealRating||0)>parseFloat(birlesik[o.steamAppID].dealRating||0)){
+        birlesik[o.steamAppID]=o;
+        // Kaynak etiketi
+        if(topRating.includes(o)) kaynakEtiket[o.steamAppID]='rating';
+        else if(topReviews.includes(o)) kaynakEtiket[o.steamAppID]='reviews';
+        else if(topSavings.includes(o)) kaynakEtiket[o.steamAppID]='savings';
+        else kaynakEtiket[o.steamAppID]='mixed';
+      }
+    });
+    
+    popOyunlar = Object.values(birlesik)
+      .filter(o=>parseFloat(o.normalPrice||0)>=3)
+      .sort((a,b)=>parseFloat(b.dealRating||0)-parseFloat(a.dealRating||0))
+      .slice(0,60);
+    
+    // Kaynak etiketini oyuna ekle
+    popOyunlar.forEach(o=>{ o._kaynak = kaynakEtiket[o.steamAppID]||'mixed'; });
+    
+    popYuklendi = true;
+    document.getElementById('pop-loader').style.display='none';
+    renderPop();
+    updatePopStats();
+  }catch(err){
+    document.getElementById('pop-loader').innerHTML=`<span style="color:var(--accent2)">⚠️ ${err.message}</span><button class="ctrl-btn" onclick="popYuklendi=false;yuklePopuler()" style="margin-top:10px">↻ Tekrar Dene</button>`;
+  }
+}
+
+function updatePopStats(){
+  const ind = popOyunlar.filter(o=>parseFloat(o.savings||0)>0);
+  const ucr = popOyunlar.filter(o=>parseFloat(o.salePrice||0)===0);
+  const enInd = popOyunlar.reduce((m,o)=>Math.max(m,parseFloat(o.savings||0)),0);
+  const ortF = ind.length ? ind.reduce((s,o)=>s+parseFloat(o.salePrice),0)/ind.length : 0;
+  const ortP = popOyunlar.reduce((s,o)=>s+parseFloat(o.dealRating||0),0)/popOyunlar.length;
+  document.getElementById('ps-toplam').textContent = popOyunlar.length;
+  document.getElementById('ps-toplam2').textContent = popOyunlar.length;
+  document.getElementById('ps-indirimli').textContent = ind.length;
+  document.getElementById('ps-indirimli2').textContent = ind.length;
+  document.getElementById('ps-en-indirim').textContent = '%'+Math.round(enInd);
+  document.getElementById('ps-en-indirim2').textContent = '%'+Math.round(enInd);
+  document.getElementById('ps-ort-fiyat').textContent = '$'+ortF.toFixed(2);
+  document.getElementById('ps-ort-puan').textContent = ortP.toFixed(1);
+  document.getElementById('ps-ucretsiz').textContent = ucr.length;
+}
+
+function popFiltrele(){
+  if(!popYuklendi) return [];
+  const q = document.getElementById('pop-ara').value.toLowerCase().trim();
+  const sortBy = document.getElementById('pop-sirala').value;
+  let liste = [...popOyunlar];
+
+  // Kategori filtresi
+  if(aktifPopCat==='rating') liste = liste.filter(o=>parseFloat(o.dealRating||0)>=8);
+  else if(aktifPopCat==='savings') liste = liste.filter(o=>parseFloat(o.savings||0)>=40);
+  else if(aktifPopCat==='reviews') liste = liste.sort((a,b)=>parseFloat(b.steamRatingPercent||0)-parseFloat(a.steamRatingPercent||0));
+  else if(aktifPopCat==='ucr') liste = liste.filter(o=>parseFloat(o.salePrice||0)===0);
+
+  // Genre filtresi
+  if(aktifGenre!=='hepsi') liste = liste.filter(o=>(o.title||'').toLowerCase().includes(aktifGenre));
+
+  // Arama
+  if(q) liste = liste.filter(o=>(o.title||'').toLowerCase().includes(q));
+
+  // Sıralama
+  liste.sort((a,b)=>{
+    if(sortBy==='indirim') return parseFloat(b.savings||0)-parseFloat(a.savings||0);
+    if(sortBy==='fiyat-asc') return parseFloat(a.salePrice||0)-parseFloat(b.salePrice||0);
+    if(sortBy==='fiyat-desc') return parseFloat(b.salePrice||0)-parseFloat(a.salePrice||0);
+    if(sortBy==='isim') return (a.title||'').localeCompare(b.title||'','tr');
+    return parseFloat(b.dealRating||0)-parseFloat(a.dealRating||0);
+  });
+
+  return liste;
+}
+
+function renderPop(){
+  if(!popYuklendi) return;
+  const liste = popFiltrele();
+  const featured = liste.slice(0,2);
+  const rest = liste.slice(2);
+
+  // FEATURED CARDS
+  if(featured.length>0){
+    document.getElementById('pop-featured').innerHTML = featured.map((o,i)=>{
+      const img = `https://cdn.akamai.steamstatic.com/steam/apps/${o.steamAppID}/header.jpg`;
+      const url = `https://store.steampowered.com/app/${o.steamAppID}`;
+      const indirim = Math.round(parseFloat(o.savings||0));
+      const ucret = parseFloat(o.salePrice)===0;
+      const fav = isFav(o.steamAppID);
+      const rankLabel = i===0?'🥇 En Popüler':'🥈 İkinci';
+      const puan = o.dealRating ? parseFloat(o.dealRating).toFixed(1) : '—';
+      return `
+      <div class="feat-card" onclick="window.open('${url}','_blank')">
+        <img class="feat-card-img" src="${img}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22460%22 height=%22215%22 fill=%22%23101830%22><rect width=%22460%22 height=%22215%22/><text x=%22230%22 y=%22115%22 text-anchor=%22middle%22 fill=%22%23243050%22 font-size=%2214%22>No Image</text></svg>'" loading="lazy">
+        <div class="feat-overlay"><div class="feat-overlay-inner">
+          <div class="feat-rank">${rankLabel} <span class="trend">⭐ ${puan}</span></div>
+          <div class="feat-title">${o.title}</div>
+          <div class="feat-price-row">
+            ${ucret?`<span class="feat-price" style="color:var(--green)">ÜCRETSİZ</span><span class="feat-orig">$${parseFloat(o.normalPrice).toFixed(2)}</span>`
+              :`<span class="feat-price">$${parseFloat(o.salePrice).toFixed(2)}</span><span class="feat-orig">$${parseFloat(o.normalPrice).toFixed(2)}</span>`}
+            ${indirim>0?`<span class="feat-discount">−${indirim}%</span>`:''}
+            <span class="feat-badge purple">#${i+1}</span>
+          </div>
+        </div></div>
+        <div class="feat-fav ${fav?'active':''}" data-id="${o.steamAppID}" onclick="toggleFav('${o.steamAppID}','${(o.title||'').replace(/'/g,"\\'")}',event)">${fav?'⭐':'☆'}</div>
+      </div>`;
+    }).join('');
+    document.getElementById('pop-featured').style.display = 'grid';
+  } else {
+    document.getElementById('pop-featured').style.display = 'none';
+  }
+
+  // CONTENT (list or grid)
+  if(rest.length===0 && featured.length===0){
+    document.getElementById('pop-content').innerHTML = `<div class="empty" style="padding:30px">🔍 Aradığın kriterlerde oyun bulunamadı</div>`;
+    return;
+  }
+
+  if(popViewMode==='list'){
+    document.getElementById('pop-content').innerHTML = `
+    <div class="rank-list">
+      ${rest.map((o,i)=>{
+        const realRank = i+3;
+        const img = `https://cdn.akamai.steamstatic.com/steam/apps/${o.steamAppID}/header.jpg`;
+        const url = `https://store.steampowered.com/app/${o.steamAppID}`;
+        const indirim = Math.round(parseFloat(o.savings||0));
+        const ucret = parseFloat(o.salePrice)===0;
+        const fav = isFav(o.steamAppID);
+        const numClass = realRank===1?'gold':realRank===2?'silver':realRank===3?'bronze':'';
+        const puan = o.dealRating ? parseFloat(o.dealRating).toFixed(1) : '—';
+        const isHot = indirim>=60;
+        return `
+        <div class="rank-item ${isHot?'rank-item-hot':''}" onclick="window.open('${url}','_blank')">
+          <span class="rank-num ${numClass}">${realRank}</span>
+          <img class="rank-img" src="${img}" onerror="this.style.display='none'" loading="lazy">
+          <div class="rank-info">
+            <div class="rank-title">${o.title}</div>
+            <div class="rank-sub">
+              ⭐ ${puan}
+              ${indirim>0?`<span class="badge badge-red">−${indirim}%</span>`:''}
+              ${ucret?`<span class="badge badge-green">Ücretsiz</span>`:''}
+              ${isHot?`<span class="rank-hot">🔥 Fırsat</span>`:''}
+            </div>
+          </div>
+          <div class="rank-right">
+            <div class="rank-price">${ucret?'ÜCRETSİZ':'$'+parseFloat(o.salePrice).toFixed(2)}</div>
+            <div class="rank-orig">$${parseFloat(o.normalPrice).toFixed(2)}</div>
+          </div>
+          <button class="rank-fav" data-id="${o.steamAppID}" onclick="toggleFav('${o.steamAppID}','${(o.title||'').replace(/'/g,"\\'")}',event)">${fav?'⭐':'☆'}</button>
+        </div>`;
+      }).join('')}
+    </div>`;
+  } else {
+    // Grid view
+    document.getElementById('pop-content').innerHTML = `
+    <div class="pop-grid-view">
+      ${rest.map((o,i)=>{
+        const realRank = i+3;
+        const img = `https://cdn.akamai.steamstatic.com/steam/apps/${o.steamAppID}/header.jpg`;
+        const url = `https://store.steampowered.com/app/${o.steamAppID}`;
+        const indirim = Math.round(parseFloat(o.savings||0));
+        const ucret = parseFloat(o.salePrice)===0;
+        return `
+        <div class="pop-grid-card" style="position:relative;animation-delay:${Math.min(i*0.03,0.6)}s" onclick="window.open('${url}','_blank')">
+          <span class="pop-grid-rank">${realRank}</span>
+          <img src="${img}" onerror="this.style.display='none'" loading="lazy">
+          <div class="pop-grid-info">
+            <div class="pop-grid-title">${o.title}</div>
+            <div class="pop-grid-price">
+              ${ucret
+                ? `<span class="gp" style="font-size:11px">ÜCRETSİZ</span><span class="go">$${parseFloat(o.normalPrice).toFixed(2)}</span>`
+                : `<span class="gp">$${parseFloat(o.salePrice).toFixed(2)}</span><span class="go">$${parseFloat(o.normalPrice).toFixed(2)}</span>`
+              }
+              ${indirim>0?`<span class="gd">−${indirim}%</span>`:''}
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+}
+
+function popViewDegis(mod){
+  popViewMode = mod;
+  document.querySelectorAll('.pop-view-btn').forEach(b=>b.classList.toggle('active',b.dataset.view===mod));
+  renderPop();
+}
+
+// Category tabs
+document.querySelectorAll('.pop-cat').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.pop-cat').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    aktifPopCat = btn.dataset.popcat;
+    renderPop();
+  });
+});
+
+// Pop search & sort
+document.getElementById('pop-ara').addEventListener('input',renderPop);
+document.getElementById('pop-sirala').addEventListener('change',renderPop);
+
+// Genre tabs
+const genreler = [
+  {label:'Hepsi',val:'hepsi'},{label:'RPG',val:'rpg'},{label:'Action',val:'action'},
+  {label:'Strategy',val:'strateg'},{label:'Indie',val:'indie'},{label:'Horror',val:'horror'},
+  {label:'Shooter',val:'shoot'},{label:'Adventure',val:'adventure'},{label:'Simulation',val:'simul'},{label:'Racing',val:'racing'},
+  {label:'Open World',val:'open world'},{label:'Puzzle',val:'puzzle'},
+];
+document.getElementById('genre-tabs').innerHTML = genreler.map(g=>`<button class="genre-btn ${g.val==='hepsi'?'active':''}" data-genre="${g.val}">${g.label}</button>`).join('');
+document.getElementById('genre-tabs').addEventListener('click',e=>{
+  const btn = e.target.closest('.genre-btn');
+  if(!btn) return;
+  document.querySelectorAll('.genre-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  aktifGenre = btn.dataset.genre;
+  renderPop();
+});
+
+// ========== SAYFA 3: ÜCRETSİZ ==========
+function renderUcretsizSayfasi(){
+  const ucretsizOyunlar = tumOyunlar.filter(o=>parseFloat(o.salePrice||0)===0);
+  const yeniListe = yeniUcretsizler.filter(f=>{
+    const o = tumOyunlar.find(x=>String(x.steamAppID)===String(f.id));
+    return o && parseFloat(o.salePrice||0)===0;
+  });
+
+  document.getElementById('fs-toplam').textContent = ucretsizOyunlar.length;
+  document.getElementById('fs-yeni').textContent = yeniListe.length;
+  document.getElementById('fs-takip').textContent = Object.keys(fiyatGecmisi).length;
+  document.getElementById('yeni-ucr-sayisi').textContent = yeniListe.length;
+  document.getElementById('tum-ucr-sayisi').textContent = ucretsizOyunlar.length;
+
+  // Yeni ücretsiz listesi
+  if(yeniListe.length>0){
+    document.getElementById('yeni-ucretsiz-list').innerHTML = yeniListe.map(f=>{
+      const o = tumOyunlar.find(x=>String(x.steamAppID)===String(f.id));
+      if(!o) return '';
+      const img = `https://cdn.akamai.steamstatic.com/steam/apps/${f.id}/header.jpg`;
+      const url = `https://store.steampowered.com/app/${f.id}`;
+      const tarih = new Date(f.kesifTarihi);
+      const tarihStr = `${tarih.toLocaleDateString('tr-TR')} ${tarih.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}`;
+      return `
+      <div class="new-free-item" onclick="modalAc('${f.id}')">
+        <div class="nf-icon">🎉</div>
+        <img src="${img}" style="width:64px;height:36px;object-fit:cover;border-radius:4px;flex-shrink:0" onerror="this.style.display='none'" loading="lazy">
+        <div class="nf-info">
+          <div class="nf-title">${f.ad}</div>
+          <div class="nf-meta">
+            <span>💰 Eskiden: <strong>$${f.oncekiFiyat.toFixed(2)}</strong></span>
+            <span>💵 Normal: <strong>$${(f.oncekiNormal||0).toFixed(2)}</strong></span>
+            <span class="nf-badge">%100 TASARRUF</span>
+          </div>
+        </div>
+        <span class="nf-date">${tarihStr}</span>
+        <a href="${url}" target="_blank" class="nf-action" onclick="event.stopPropagation()">Steam'de Aç</a>
+      </div>`;
+    }).filter(Boolean).join('');
+  } else {
+    document.getElementById('yeni-ucretsiz-list').innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px;border:1px dashed var(--border);border-radius:10px">
+      ⏳ Henüz yeni ücretsiz oyun bulunamadı. Sistem fiyatları takip ediyor...
+    </div>`;
+  }
+
+  // Tüm ücretsiz grid
+  if(ucretsizOyunlar.length>0){
+    document.getElementById('tum-ucretsiz-grid').innerHTML = ucretsizOyunlar.map((o,i)=>oyunKarti(o,i)).join('');
+  } else {
+    document.getElementById('tum-ucretsiz-grid').innerHTML = `<div class="empty">Henüz ücretsiz oyun bulunamadı</div>`;
+  }
+}
+
+// ========== BOOT ==========
+yukle();
+updateFreeBadge();
+setInterval(yukle, 300000);
+</script>
+</body>
+</html>
